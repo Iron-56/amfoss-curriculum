@@ -1,0 +1,8 @@
+# python packages
+env/
+
+# sqlite db
+instance/
+
+# env
+.env
