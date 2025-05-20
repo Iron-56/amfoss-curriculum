@@ -189,6 +189,35 @@ def updateFriend(personId):
 
 		return jsonify({"name":friend.name}), 200
 
+@app.route('/delete/<userId>', methods=['DELETE'])
+@jwt_required()
+def deleteUser(userId):
+	id = get_jwt_identity()
+
+	if not validate(id):
+		return "Invalid input", 400
+	
+	if id != userId:
+		return "You can only delete your own account", 400
+	
+	user = User.query.filter_by(id=userId).first()
+	if not user:
+		return "User not found", 404
+	
+	db.session.delete(user)
+	db.session.commit()
+
+	friend_entries = FriendEntry.query.filter((FriendEntry.user_id == userId) | (FriendEntry.friend_id == userId)).all()
+	for entry in friend_entries:
+		db.session.delete(entry)
+		db.session.commit()
+	pokemon_entries = PokemonEntry.query.filter_by(userId=userId).all()
+	for entry in pokemon_entries:
+		db.session.delete(entry)
+		db.session.commit()
+
+	return "User deleted", 200
+
 @app.route('/friends', methods=['GET'])
 @jwt_required()
 def getFriends():

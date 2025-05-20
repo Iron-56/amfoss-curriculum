@@ -144,44 +144,40 @@ class _HomeState extends State<Home> {
                 Image.asset("assets/pokeball.png", width: 40),
               ]),
             )),
-            imageContainer(imagePath: "assets/settings.png"),
+            GestureDetector(child: imageContainer(imagePath: "assets/settings.png"),
+              onTap: () => Navigator.pushNamed(context, '/settings'),
+            ),
           ],
         )
         ]),
-        ClipRRect(borderRadius: BorderRadius.circular(5),
-          child: pokemonData == null ? const CircularProgressIndicator() : SimpleShadow(
-            sigma: 7,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 250),
-              child: Image.network(pokemonData!['sprites']['other']['official-artwork']['front_default'], fit: BoxFit.contain),
-            ),
+        Column(children: [
+          ClipRRect(borderRadius: BorderRadius.circular(5),
+            child: pokemonData == null ? const CircularProgressIndicator() : SimpleShadow(
+              sigma: 7,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: Image.network(pokemonData!['sprites']['other']['official-artwork']['front_default'], fit: BoxFit.contain),
+              ),
+            )
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, '/browse');
+            },
+            child: itemContainer(
+              w: const Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.travel_explore, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text("Browse", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
+              )
+            )
           )
-        ),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 150),
-          child: Row(children: [
-            Expanded(child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/browse');
-              },
-              child: imageContainer(imagePath: "assets/chest.png"),
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/minigames');
-              },
-              child: imageContainer(imagePath: "assets/chest.png"),
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/browse');
-              },
-              child: imageContainer(imagePath: "assets/chest.png"),
-            )),
-          ])
-        )
+        ]),
+        const SizedBox()
       ]))
     ]));
   }
@@ -200,14 +196,14 @@ class _HomeState extends State<Home> {
 
   Widget itemContainer({required Widget w}) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.grey.withOpacity(0.5),
         border: Border.all(
-            color: Colors.black,
+            color: Colors.black38,
             width: 2
         ),
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(50),
       ),
       child: w
     );

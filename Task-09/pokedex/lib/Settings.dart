@@ -75,6 +75,31 @@ class _SettingsState extends State<Settings> {
     Navigator.pushNamed(context, "/login");
   }
 
+  void deleteAccount() async {
+    final preferences = await SharedPreferences.getInstance();
+    final token = preferences.getString('token');
+
+    if (token == null) return;
+
+    final url = Uri.parse('http://127.0.0.1:5000/delete');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        preferences.remove('token');
+        if (!mounted) return;
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      } else {
+        throw Exception('Failed to delete account');
+      }
+    } catch (e) {
+      debugPrint("Delete error: $e");
+    }
+  }
+
   void addFriend() async {
     final userId = userIdController.text.trim();
 
@@ -120,45 +145,44 @@ class _SettingsState extends State<Settings> {
     }
   }
 
-  Widget buildTradeTile(Map<String, dynamic> trade) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.blue[800]?.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          _buildPokemonColumn("Offered", trade["tradeOut"]),
-          const Icon(Icons.swap_horiz, color: Colors.white),
-          _buildPokemonColumn("Requested", trade["tradeFor"]),
-        ]),
-         ElevatedButton(
-          onPressed: () => Navigator.pushNamed(context, '/browse'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          child: const Text("Trade"),
-        )
-      ])
-    );
-  }
-
-  Widget _buildPokemonColumn(String label, dynamic pokemon) {
-    return Column(
-      children: [
-        Image.network(pokemon['sprites']['other']['official-artwork']['front_default'], height: 70),
-        const SizedBox(height: 6),
-        Text(
-          getTitle(pokemon["name"]),
-          style: TextStyle(color: Colors.yellow[700], fontWeight: FontWeight.bold),
+  void showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF2C2F3E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Colors.redAccent, width: 2),
         ),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      ],
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.redAccent),
+            SizedBox(width: 10),
+            Text("Delete Account", style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: const Text("Are you sure you want to delete your account? This action cannot be undone.", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              deleteAccount();
+            },
+            icon: const Icon(Icons.delete, color: Colors.white),
+            label: const Text("Delete", style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -288,10 +312,7 @@ class _SettingsState extends State<Settings> {
                           ],
                         ),
                         const SizedBox(width: 20),
-                        IconButton(
-                          icon: const Icon(Icons.logout, color: Colors.white),
-                          onPressed: () => logout()
-                        ),
+
                       ]),
 
                       IconButton(
@@ -313,11 +334,32 @@ class _SettingsState extends State<Settings> {
                   friendsData.isEmpty ? const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
                     child: Center(child: Text("You have no friends", style: TextStyle(color: Colors.white70, fontSize: 16))),
-                  ) : Column(children: friendsData.map((f) => buildFriendTile(f)).toList()),
+                  ) : Column(children: friendsData.map((f) => buildFriendTile(f)).toList())
                 ],
               ),
             ),
-          )
+          ),
+          Align(alignment: Alignment.bottomLeft, child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              IconButton(
+                icon: const Icon(Icons.logout, color: Colors.white),
+                onPressed: () => logout()
+              ),
+              ElevatedButton.icon(
+                onPressed: showDeleteAccountDialog,
+                icon: const Icon(Icons.delete_forever),
+                label: const Text("Delete Account"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: const BorderSide(color: Colors.redAccent, width: 2),
+                ),
+              ),
+            ]),
+          ))
         ],
       ),
     );
